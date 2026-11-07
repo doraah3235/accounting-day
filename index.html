@@ -245,6 +245,23 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;line-height:1.3;t
 .hero .closing .closing-org{margin:0;font-size:14px;font-weight:600;color:var(--brand-teal-lt)}
 .hero .closing .closing-en{margin:-8px 0 0;font-size:11.5px;color:var(--muted);direction:ltr}
 
+/* final result card */
+.result-card{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:22px 16px 18px;border-radius:18px;
+  background:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1.5px solid color-mix(in srgb,var(--brand-teal) 70%,transparent);
+  box-shadow:0 0 30px color-mix(in srgb,var(--brand-teal) 30%,transparent)}
+.rc-eyebrow{font-size:15px;font-weight:700;color:#FFFFFF}
+.rc-name{font-family:var(--f-display);font-size:clamp(28px,8vw,40px);line-height:1.3;color:#FFFFFF;padding:4px 16px;border-radius:999px;background:color-mix(in srgb,var(--brand-teal) 30%,transparent);border:1px solid color-mix(in srgb,var(--brand-teal) 70%,transparent)}
+.rc-label{font-size:13px;color:var(--brand-teal-lt);font-weight:600;margin-top:4px}
+.rc-title{color:var(--amber)}
+.rc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-top:6px}
+.rc-stats div{display:flex;flex-direction:column;gap:2px;padding:10px 4px;border-radius:10px;background:rgba(0,0,0,.18);min-width:0}
+.rc-stats b{font-size:22px;color:#FFFFFF;line-height:1.2}
+.rc-stats span{font-size:12px;color:var(--muted)}
+.hero .result-card .rc-msg{margin:4px 0 0;color:#E6E9FF;max-width:52ch}
+.code-box summary{color:var(--muted)!important;font-weight:600;font-size:14px}
+.code-box .code{margin-top:8px}
+@media (max-width:560px){.rc-stats{grid-template-columns:repeat(2,1fr)}}
+
 /* mistakes review */
 .review{display:flex;flex-direction:column;gap:10px}
 .review h3{font-size:22px;color:var(--amber)}
@@ -418,7 +435,7 @@ const R=()=>ROUNDS[S.r], Qn=()=>R().qs[S.qi];
 function hud(popLife){
   $("score").textContent=S.score.toLocaleString("en-US");
   $("hints").textContent=S.hints;
-  $("player").textContent=S.player?`اللاعب رقم ${S.player}${S.name?" · "+S.name:""}`:"لم يُحدَّد رقمك بعد";
+  $("player").textContent=S.player?`اللاعب رقم ${S.player}${S.name?" · "+S.name:""}${S.screen==="end"?" · "+verdictFor(summary().acc):""}`:"لم يُحدَّد رقمك بعد";
   const pre=["name","title"].includes(S.screen);
   $("track").innerHTML=ROUNDS.map((r,i)=>{
     const state=pre?"":i<S.r||S.screen==="end"&&!S.eliminated?"done":i===S.r&&S.screen!=="end"?"now":"";
@@ -909,21 +926,28 @@ function showEnd(){
   const code=resultCode(sm);
   stage.innerHTML=`<section class="stage hero brand enter">
     ${brandBar()}
-    <span class="eyebrow">${esc(S.name)} · اللاعب رقم ${S.player} · التقرير النهائي</span>
-    <div class="result-num">${S.score.toLocaleString("en-US")}<small> نقطة</small></div>
-    <div class="verdict-label">لقبك</div><div class="verdict">${esc(verdict)}</div>
-    <p>${msg}</p>
+    <div class="result-card" role="status">
+      <span class="rc-eyebrow">نتيجتك النهائية يا ${esc(S.name)}</span>
+      <span class="rc-label">اللاعب ولقبه</span>
+      <span class="rc-name">${esc(S.name)} · <span class="rc-title">${esc(verdict)}</span></span>
+      <div class="rc-stats">
+        <div><b class="num">${S.score.toLocaleString("en-US")}</b><span>نقطة</span></div>
+        <div><b class="num">${sm.correct}/${sm.all}</b><span>إجابة صحيحة</span></div>
+        <div><b class="num">${sm.acc}٪</b><span>نسبة الدقة</span></div>
+        <div><b class="num">${S.player}</b><span>رقم اللاعب</span></div>
+      </div>
+      <p class="rc-msg">${msg}</p>
+    </div>
     ${durraHTML(weak)}
-    <p style="color:var(--ink)">إجابات صحيحة: <span class="num">${sm.correct}/${sm.total}</span> (<span class="num">${sm.acc}٪</span>) · الجولات: <span class="num">${sm.cleared}/${ROUNDS.length}</span></p>
     <div class="tbl-wrap"><table class="sum"><thead><tr><th>الجولة</th><th class="n">الصحيح</th><th class="n">النقاط</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <p>${weak.length?`مواضيع تحتاج مراجعة: <b style="color:var(--ink)">${weak.join("، ")}</b>`:"لا توجد مواضيع ضعيفة. أجبت صحيحًا في كل المواضيع التي واجهتها."}</p>
     ${wrongCount?`<details class="all"><summary>كل أخطائك مع التصحيح (${wrongCount})</summary>${reviewHTML(S.log,"الأخطاء")}</details>`:""}
-    <div class="panel2" id="board"><h3>جدول المتصدرين</h3><p class="note" id="boardMsg">جارٍ حفظ نتيجتك…</p><div id="boardBody"></div></div>
-    <div class="panel2"><h3>رمز نتيجتك</h3>
-      <p class="note">أرسل هذا الرمز (أو صورة من هذه الشاشة) لمنظّم المسابقة ليُحتسب في الترتيب.</p>
+    <div class="panel2" id="board" hidden><h3>جدول المتصدرين</h3><p class="note" id="boardMsg">جارٍ حفظ نتيجتك…</p><div id="boardBody"></div></div>
+    <details class="all code-box"><summary>رمز النتيجة للمنظّم</summary>
+      <p class="note">إذا طلب منك المنظّم نتيجتك، انسخ هذا الرمز وأرسله له، أو أرسل صورة من بطاقة نتيجتك أعلاه.</p>
       <div class="code" id="code">${code}</div>
       <div class="tools"><button class="btn plain" id="copy">نسخ الرمز</button><span class="note" id="copyMsg"></span></div>
-    </div>
+    </details>
     <div class="closing">
       <div class="emblem-tile" role="img" aria-label="شعار شركة التقرير المثالي">${MARK}</div>
       <span class="rule"></span>
@@ -943,7 +967,8 @@ async function saveAndBoard(sm){
   const msg=$("boardMsg"), body=$("boardBody");
   const to=new Promise(r=>setTimeout(()=>r("timeout"),10000));
   const ready=await Promise.race([capReady.then(()=>"ok"),to]);
-  if(ready!=="ok"||!DB||!USER){if(msg)msg.textContent="جدول المتصدرين يعمل عند فتح اللعبة من رابط Claude بعد تسجيل الدخول. نتيجتك محفوظة في رمز النتيجة أدناه.";return}
+  if(ready!=="ok"||!DB||!USER)return;
+  if($("board"))$("board").hidden=false;
   let id=null;try{id=await USER.id()}catch(e){}
   if(!id){msg.textContent="تعذّر التعرف على حسابك، فلم تُحفظ النتيجة في الجدول. استخدم رمز النتيجة أدناه.";return}
   try{
